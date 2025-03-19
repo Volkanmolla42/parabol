@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Etkileşimli Parabol Öğrenme</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+        }
+        .container {
+            height: 100vh;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            padding: 10px 20px;
+            background: #4a90e2;
+            color: white;
+            border-bottom: 1px solid #ddd;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            width: 150px;
+            background: #f5f5f5;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        .tab {
+            padding: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab.active {
+            background: #4a90e2;
+            color: white;
+        }
+        .tab-content-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .tab-content {
+            display: none;
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+        .simulator-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .sim-top {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-right: 15px;
+            align-self: flex-start;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background: white;
+            max-height: 350px;
+            max-width: 100%;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .equation {
+            font-size: 1rem;
+            margin: 5px 0;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .form-container {
+            margin-top: 10px;
+        }
+        .info-area {
+            display: flex;
+            margin-top: 10px;
+        }
+        .info-box {
+            background: #f9f9f9;
+            border-left: 4px solid #4a90e2;
+            padding: 8px 10px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        .sub-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        .sub-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-right: 2px;
+            background: #f0f0f0;
+            border-radius: 5px 5px 0 0;
+            font-size: 0.9rem;
+        }
+        .sub-tab.active {
+            background: #4a90e2;
+            color: white;
+        }
+        .sub-content {
+            display: none;
+            overflow-y: auto;
+            max-height: calc(100vh - 150px);
+        }
+        .sub-content.active {
+            display: block;
+        }
+        .grid-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2px;
+            font-size: 0.8rem;
+        }
+        .example-points {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .point-marker {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            text-align: center;
+            background: #eee;
+            font-size: 0.8rem;
+        }
+        .point-marker:hover {
+            background: #ddd;
+        }
+        .quiz-question {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f8ff;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .btn {
+            padding: 6px 12px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+        .btn:hover {
+            background: #3a7bc8;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+        h3 {
+            font-size: 1.1rem;
+            margin: 10px 0 5px 0;
+        }
+        p, ul {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Etkileşimli Parabol Simülatörü 📈</h1>
+        </div>
+
+        <div class="content-area">
+            <div class="tabs">
+                <div class="tab active" data-tab="simulator">Simülatör</div>
+                <div class="tab" data-tab="theory">Teori</div>
+                <div class="tab" data-tab="exercises">Alıştırmalar</div>
+                <div class="tab" data-tab="quiz">Mini Quiz</div>
+            </div>
+
+            <div class="tab-content-container">
+                <div class="tab-content active" id="simulator">
+                    <div class="simulator-container">
+                        <div class="sim-top">
+                            <div class="controls">
+                                <div class="control-group">
+                                    <label for="a">a Katsayısı</label>
+                                    <input type="range" id="a" min="-5" max="5" step="0.5" value="1">
+                                    <span id="aValue">1</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="h">h Kayması</label>
+                                    <input type="range" id="h" min="-5" max="5" step="0.5" value="0">
+                                    <span id="hValue">0</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="k">k Kayması</label>
+                                    <input type="range" id="k" min="-5" max="5" step="0.5" value="0">
+                                    <span id="kValue">0</span>
+                                </div>
+
+                                <div class="form-container">
+                                    <label>Standart Form:</label>
+                                    <div class="equation" id="standardEquation">y = x²</div>
+                                </div>
+                                <div class="form-container">
+                                    <label>Tepe Noktası Formu:</label>
+                                    <div class="equation" id="equation">y = 1(x - 0)² + 0</div>
+                                </div>
+                            </div>
+
+                            <div class="canvas-container">
+                                <canvas id="parabolaCanvas" width="450" height="300"></canvas>
+                                <div class="grid-labels">
+                                    <span>-10</span>
+                                    <span>-5</span>
+                                    <span>0</span>
+                                    <span>5</span>
+                                    <span>10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-area">
+                            <div class="info-box">
+                                <div id="vertexInfo"></div>
+                                <div id="interceptsInfo"></div>
+                                <div id="shapeInfo"></div>
+                            </div>
+                        </div>
+
+                        <div class="example-points">
+                            <div class="point-marker" data-a="1" data-h="0" data-k="0">Standart: y = x²</div>
+                            <div class="point-marker" data-a="-1" data-h="0" data-k="0">Aşağı: y = -x²</div>
+                            <div class="point-marker" data-a="0.5" data-h="0" data-k="0">Geniş: y = 0.5x²</div>
+                            <div class="point-marker" data-a="1" data-h="2" data-k="3">Kaymış: y = (x-2)² + 3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="theory">
+                    <div class="sub-tabs">
+                        <div class="sub-tab active" data-tab="basics">Temel Bilgiler</div>
+                        <div class="sub-tab" data-tab="properties">Özellikler</div>
+                        <div class="sub-tab" data-tab="formulas">Formüller</div>
+                    </div>
+
+                    <div class="sub-content active" id="basics">
+                        <div class="info-box">
+                            <h3>Parabol Nedir?</h3>
+                            <p>
+                                Parabol, ikinci dereceden bir fonksiyonun grafiğidir. En genel haliyle bir parabol şu fonksiyonla temsil edilir:
+                                <br><strong>y = ax² + bx + c</strong> (Standart Form)
+                                <br>veya
+                                <br><strong>y = a(x-h)² + k</strong> (Tepe Noktası Formu)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="sub-content" id="properties">
+                        <div class="info-box">
+                            <h3>Önemli Özellikler:</h3>
+                            <ul>
+                                <li><strong>a katsayısı:</strong> Parabolün açıklığını ve yönünü belirler.
+                                    <ul>
+                                        <li>a > 0 ise parabol yukarı doğru açıktır (∪)</li>
+                                        <li>a < 0 ise parabol aşağı doğru açıktır (∩)</li>
+                                        <li>|a| büyükse parabol dardır, küçükse geniştir</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Tepe Noktası:</strong> (h, k) noktasıdır ve parabolün en düşük/yüksek noktasıdır.</li>
+                                <li><strong>Eksenleri Kesme:</strong>
+                                    <ul>
+                                        <li>x-eksenini kesme: y = 0 olduğunda x değerleri</li>
+                                        <li>y-eksenini kesme: x = 0 olduğunda y değeri</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="sub-content" id="formulas">
+                        <div class="info-box">
+                            <h3>Formlar Arası Dönüşüm:</h3>
+                            <p>
+                                Standart form (y = ax² + bx + c) ile tepe noktası formu (y = a(x-h)² + k) arasında:
+                                <ul>
+                                    <li>h = -b/(2a)</li>
+                                    <li>k = c - b²/(4a)</li>
+                                </ul>
+                                Veya tersi:
+                                <ul>
+                                    <li>b = -2ah</li>
+                                    <li>c = k + ah²</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="exercises">
+                    <div class="sub-tabs">
+                        <div class="sub-tab active" data-tab="ex1">Alıştırma 1</div>
+                        <div class="sub-tab" data-tab="ex2">Alıştırma 2</div>
+                        <div class="sub-tab" data-tab="ex3">Alıştırma 3</div>
+                    </div>
+
+                    <div class="sub-content active" id="ex1">
+                        <h3>Tepe Noktasını Bulma</h3>
+                        <p>f(x) = 2x² - 4x + 5 fonksiyonunun tepe noktasını bulun.</p>
+                        <button class="btn" onclick="toggleSolution('ex1sol')">Çözümü Göster</button>
+                        <div id="ex1sol" style="display: none;" class="info-box">
+                            <p>Standart form: y = 2x² - 4x + 5</p>
+                            <p>a = 2, b = -4, c = 5</p>
+                            <p>h = -b/(2a) = -(-4)/(2·2) = 4/4 = 1</p>
+                            <p>k = c - b²/(4a) = 5 - (-4)²/(4·2) = 5 - 16/8 = 5 - 2 = 3</p>
+                            <p>Tepe noktası: (1, 3)</p>
+                        </div>
+                    </div>
+
+                    <div class="sub-content" id="ex2">
+                        <h3>Parabolün Formunu Değiştirme</h3>
+                        <p>f(x) = 3(x-2)² - 4 fonksiyonunu standart forma dönüştürün.</p>
+                        <button class="btn" onclick="toggleSolution('ex2sol')">Çözümü Göster</button>
+                        <div id="ex2sol" style="display: none;" class="info-box">
+                            <p>Tepe noktası formu: y = 3(x-2)² - 4</p>
+                            <p>a = 3, h = 2, k = -4</p>
+                            <p>y = 3(x-2)² - 4</p>
+                            <p>y = 3(x² - 4x + 4) - 4</p>
+                            <p>y = 3x² - 12x + 12 - 4</p>
+                            <p>y = 3x² - 12x + 8</p>
+                        </div>
+                    </div>
+
+                    <div class="sub-content" id="ex3">
+                        <h3>Köklerden Parabol Oluşturma</h3>
+                        <p>x = -2 ve x = 3 noktalarında x-eksenini kesen ve y = 2 noktasından geçen parabolün denklemini bulun.</p>
+                        <button class="btn" onclick="toggleSolution('ex3sol')">Çözümü Göster</button>
+                        <div id="ex3sol" style="display: none;" class="info-box">
+                            <p>f(x) = a(x+2)(x-3) formatını kullanabiliriz</p>
+                            <p>f(0) = a·2·(-3) = -6a = 2 (y-eksenini kesme noktası)</p>
+                            <p>a = -1/3</p>
+                            <p>f(x) = -(1/3)(x+2)(x-3)</p>
+                            <p>f(x) = -(1/3)(x² - 3x + 2x - 6)</p>
+                            <p>f(x) = -(1/3)(x² - x - 6)</p>
+                            <p>f(x) = -(1/3)x² + (1/3)x + 2</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="quiz">
+                    <div class="quiz-container">
+                        <div class="quiz-question" id="q1">
+                            <p>1. y = 2(x-3)² + 4 parabolünün tepe noktası nedir?</p>
+                            <div>
+                                <input type="radio" name="q1" id="q1a" value="a"> <label for="q1a">a) (3, 4)</label>
+                                <input type="radio" name="q1" id="q1b" value="b"> <label for="q1b">b) (3, 2)</label>
+                                <input type="radio" name="q1" id="q1c" value="c"> <label for="q1c">c) (4, 3)</label>
+                                <input type="radio" name="q1" id="q1d" value="d"> <label for="q1d">d) (2, 3)</label>
+                            </div>
+                        </div>
+
+                        <div class="quiz-question" id="q2">
+                            <p>2. Aşağıdaki parabollerden hangisi aşağı doğru açıktır?</p>
+                            <div>
+                                <input type="radio" name="q2" id="q2a" value="a"> <label for="q2a">a) y = 3x² + 2</label>
+                                <input type="radio" name="q2" id="q2b" value="b"> <label for="q2b">b) y = -x² + 4x - 1</label>
+                                <input type="radio" name="q2" id="q2c" value="c"> <label for="q2c">c) y = (x+1)² + 3</label>
+                                <input type="radio" name="q2" id="q2d" value="d"> <label for="q2d">d) y = 2x² - 4x</label>
+                            </div>
+                        </div>
+
+                        <div class="quiz-question" id="q3">
+                            <p>3. y = 2x² - 4x - 6 parabolü kaç noktada x-eksenini keser?</p>
+                            <div>
+                                <input type="radio" name="q3" id="q3a" value="a"> <label for="q3a">a) 0</label>
+                                <input type="radio" name="q3" id="q3b" value="b"> <label for="q3b">b) 1</label>
+                                <input type="radio" name="q3" id="q3c" value="c"> <label for="q3c">c) 2</label>
+                                <input type="radio" name="q3" id="q3d" value="d"> <label for="q3d">d) 3</label>
+                            </div>
+                        </div>
+
+                        <button class="btn" onclick="checkQuiz()">Cevapları Kontrol Et</button>
+                        <div id="quiz-results"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elementleri
+        const canvas = document.getElementById('parabolaCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Kontrol elementleri
+        const aInput = document.getElementById('a');
+        const hInput = document.getElementById('h');
+        const kInput = document.getElementById('k');
+
+        // Değer göstericiler
+        const aValue = document.getElementById('aValue');
+        const hValue = document.getElementById('hValue');
+        const kValue = document.getElementById('kValue');
+
+        // Bilgi gösterimleri
+        const standardEquation = document.getElementById('standardEquation');
+        const equation = document.getElementById('equation');
+        const vertexInfo = document.getElementById('vertexInfo');
+        const interceptsInfo = document.getElementById('interceptsInfo');
+        const shapeInfo = document.getElementById('shapeInfo');
+
+        // Tab kontrolü
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+
+                // Aktif tab ve içeriği kaldır
+                document.querySelector('.tab.active').classList.remove('active');
+                document.querySelector('.tab-content.active').classList.remove('active');
+
+                // Yeni tab ve içeriği aktif yap
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Alt-tab kontrolü
+        const subTabs = document.querySelectorAll('.sub-tab');
+        subTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabParent = tab.closest('.tab-content');
+                const tabId = tab.getAttribute('data-tab');
+
+                // Aktif alt-tab ve içeriği kaldır
+                tabParent.querySelector('.sub-tab.active').classList.remove('active');
+                tabParent.querySelector('.sub-content.active').classList.remove('active');
+
+                // Yeni alt-tab ve içeriği aktif yap
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Izgara çizimi
+        function drawGrid() {
+            ctx.strokeStyle = '#ddd';
+            ctx.beginPath();
+
+            const scale = 22; // Ölçeği küçülttüm
+
+            // Dikey çizgiler
+            for(let x = -10; x <= 10; x++) {
+                ctx.moveTo(canvas.width/2 + x*scale, 0);
+                ctx.lineTo(canvas.width/2 + x*scale, canvas.height);
+
+                // Koordinat değerlerini ekle
+                if (x !== 0 && x % 5 === 0) {
+                    ctx.fillStyle = '#888';
+                    ctx.fillText(x, canvas.width/2 + x*scale - 5, canvas.height/2 + 15);
+                }
+            }
+
+            // Yatay çizgiler
+            for(let y = -10; y <= 10; y++) {
+                ctx.moveTo(0, canvas.height/2 + y*scale);
+                ctx.lineTo(canvas.width, canvas.height/2 + y*scale);
+
+                // Koordinat değerlerini ekle
+                if (y !== 0 && y % 5 === 0) {
+                    ctx.fillStyle = '#888';
+                    ctx.fillText(-y, canvas.width/2 - 15, canvas.height/2 + y*scale + 5);
+                }
+            }
+
+            ctx.stroke();
+
+            // Eksenler
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, 0);
+            ctx.lineTo(canvas.width/2, canvas.height);
+            ctx.moveTo(0, canvas.height/2);
+            ctx.lineTo(canvas.width, canvas.height/2);
+            ctx.stroke();
+
+            // Eksen etiketleri
+            ctx.fillStyle = 'black';
+            ctx.fillText("X", canvas.width - 10, canvas.height/2 - 10);
+            ctx.fillText("Y", canvas.width/2 + 10, 10);
+            ctx.fillText("0", canvas.width/2 - 10, canvas.height/2 + 15);
+        }
+
+        // Parabol çizimi
+        function drawParabola() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+
+            const scale = 22; // Ölçeği küçülttüm
+
+            const a = parseFloat(aInput.value);
+            const h = parseFloat(hInput.value);
+            const k = parseFloat(kInput.value);
+
+            // Standart form hesaplama
+            const b = -2 * a * h;
+            const c = a * h * h + k;
+
+            // Denklem güncelleme
+            equation.textContent = `y = ${a}(x ${h >= 0 ? '-' : '+'} ${Math.abs(h)})² ${k >= 0 ? '+' : '-'} ${Math.abs(k)}`;
+            standardEquation.textContent = `y = ${a}x² ${b >= 0 ? '+' : '-'} ${Math.abs(b)}x ${c >= 0 ? '+' : '-'} ${Math.abs(c)}`;
+
+            // Parabol çizimi
+            ctx.beginPath();
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+
+            for(let x = -10; x <= 10; x += 0.1) {
+                const y = a*(x - h)**2 + k;
+                const screenX = canvas.width/2 + x*scale;
+                const screenY = canvas.height/2 - y*scale;
+
+                if(x === -10) ctx.moveTo(screenX, screenY);
+                else ctx.lineTo(screenX, screenY);
+            }
+
+            ctx.stroke();
+
+            // Tepe noktası
+            ctx.fillStyle = '#2ecc71';
+            ctx.beginPath();
+            const vertexX = canvas.width/2 + h*scale;
+            const vertexY = canvas.height/2 - k*scale;
+            ctx.arc(vertexX, vertexY, 5, 0, Math.PI*2);
+            ctx.fill();
+
+            // Tepe noktası etiketi
+            ctx.fillStyle = 'black';
+            ctx.fillText(`(${h}, ${k})`, vertexX + 8, vertexY - 8);
+
+            // Bilgileri güncelle
+            vertexInfo.innerHTML = `🏁 <strong>Tepe Noktası:</strong> (${h}, ${k})`;
+            updateIntercepts(a, h, k, scale);
+            updateShapeInfo(a);
+        }
+
+        // Kesim noktaları güncelleme
+        function updateIntercepts(a, h, k, scale) {
+            let content = '';
+
+            // y-kesimi (x=0)
+            const yIntercept = a*(0 - h)**2 + k;
+            content += `↕️ <strong>y-kesimi:</strong> (0, ${yIntercept.toFixed(1)})<br>`;
+
+            // x-kesimleri (y=0)
+            try {
+                const discriminant = (-k)/a;
+                if(a === 0) throw new Error("a sıfır olamaz");
+                if(discriminant < 0) throw new Error("Reel kök yok");
+
+                const sqrtVal = Math.sqrt(discriminant);
+                const x1 = h + sqrtVal;
+                const x2 = h - sqrtVal;
+
+                // x-kesim noktalarını görselleştir
+                if(discriminant >= 0) {
+                    ctx.fillStyle = '#e67e22';
+
+                    // İlk kesim noktası
+                    const x1ScreenX = canvas.width/2 + x1*scale;
+                    const x1ScreenY = canvas.height/2;
+                    ctx.beginPath();
+                    ctx.arc(x1ScreenX, x1ScreenY, 5, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillText(`(${x1.toFixed(1)}, 0)`, x1ScreenX, x1ScreenY - 10);
+
+                    // Diskriminant sıfırdan büyükse (iki kesim noktası)
+                    if(discriminant > 0) {
+                        const x2ScreenX = canvas.width/2 + x2*scale;
+                        const x2ScreenY = canvas.height/2;
+                        ctx.beginPath();
+                        ctx.arc(x2ScreenX, x2ScreenY, 5, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.fillText(`(${x2.toFixed(1)}, 0)`, x2ScreenX, x2ScreenY - 10);
+
+                        content += `↔️ <strong>x-kesimleri:</strong> (${x1.toFixed(1)}, 0) ve (${x2.toFixed(1)}, 0)`;
+                    } else {
+                        content += `↔️ <strong>x-kesimi:</strong> (${x1.toFixed(1)}, 0) (teğet geçiyor)`;
+                    }
+                }
+            } catch {
+                content += `↔️ <strong>x-kesimleri:</strong> Yok`;
+            }
+
+            interceptsInfo.innerHTML = content;
+        }
+
+        // Şekil bilgisini güncelleme
+        function updateShapeInfo(a) {
+            let info = '';
+
+            if(a > 0) {
+                info += `📈 <strong>Yön:</strong> Yukarı açık (∪)<br>`;
+            } else if(a < 0) {
+                info += `📉 <strong>Yön:</strong> Aşağı açık (∩)<br>`;
+            } else {
+                info += `📏 <strong>Yön:</strong> Doğru (a=0)<br>`;
+            }
+
+            // Açıklık değerlendirmesi
+            if(a !== 0) {
+                const absA = Math.abs(a);
+                if(absA < 1) {
+                    info += `🔍 <strong>Açıklık:</strong> Geniş (|a| < 1)`;
+                } else if(absA === 1) {
+                    info += `🔍 <strong>Açıklık:</strong> Standart (|a| = 1)`;
+                } else {
+                    info += `🔍 <strong>Açıklık:</strong> Dar (|a| > 1)`;
+                }
+            }
+
+            shapeInfo.innerHTML = info;
+        }
+
+        // Input event listeners
+        [aInput, hInput, kInput].forEach(input => {
+            input.addEventListener('input', () => {
+                aValue.textContent = aInput.value;
+                hValue.textContent = hInput.value;
+                kValue.textContent = kInput.value;
+                drawParabola();
+            });
+        });
+
+        // Örnek nokta işaretçileri
+        const pointMarkers = document.querySelectorAll('.point-marker');
+        pointMarkers.forEach(marker => {
+            marker.addEventListener('click', () => {
+                const a = marker.getAttribute('data-a');
+                const h = marker.getAttribute('data-h');
+                const k = marker.getAttribute('data-k');
+
+                aInput.value = a;
+                hInput.value = h;
+                kInput.value = k;
+
+                aValue.textContent = a;
+                hValue.textContent = h;
+                kValue.textContent = k;
+
+                drawParabola();
+            });
+        });
+
+        // Çözüm gösterme fonksiyonu
+        function toggleSolution(id) {
+            const solution = document.getElementById(id);
+            if(solution.style.display === 'none') {
+                solution.style.display = 'block';
+            } else {
+                solution.style.display = 'none';
+            }
+        }
+
+        // Quiz kontrol fonksiyonu
+        function checkQuiz() {
+            const answers = {
+                q1: "a", // (3, 4)
+                q2: "b", // y = -x² + 4x - 1
+                q3: "c"  // 2 kesim noktası
+            };
+
+            let score = 0;
+            let results = "<h3>Quiz Sonuçları:</h3><ul>";
+
+            // Her soru için cevapları kontrol et
+            for(let q in answers) {
+                const selectedAnswer = document.querySelector(`input[name="${q}"]:checked`);
+                if(selectedAnswer) {
+                    if(selectedAnswer.value === answers[q]) {
+                        score++;
+                        results += `<li>Soru ${q.substring(1)}: Doğru ✅</li>`;
+                    } else {
+                        results += `<li>Soru ${q.substring(1)}: Yanlış ❌</li>`;
+                    }
+                } else {
+                    results += `<li>Soru ${q.substring(1)}: Cevaplanmadı</li>`;
+                }
+            }
+
+            results += `</ul><p>Toplam Skor: ${score}/3</p>`;
+
+            document.getElementById('quiz-results').innerHTML = results;
+        }
+
+        // İlk çizim
+        drawParabola();
+    </script>
+</body>
+</html>
